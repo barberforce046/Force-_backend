@@ -17,23 +17,32 @@ app.get("/", (req, res) => {
   res.json({ ok: true, service: "force-backend", endpoints: ["/api/health", "/api/auth", "/api/cuts"] });
 });
 
-app.use("/api/auth", authRouter);
-app.use("/api/cuts", cutsRouter);
+// Ensure DB for API routes; fail fast if not connected
+const requireDb = (req, res, next) => {
+  ensureDb();
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({ error: "Database unavailable" });
+  }
+  next();
+};
+
+app.use("/api/auth", requireDb, authRouter);
+app.use("/api/cuts", requireDb, cutsRouter);
 
 let connectingPromise = null;
 const ensureDb = async () => {
   if (!mongoUri) return; // allow health/root without hard failing
   if (mongoose.connection.readyState === 1) return; // connected
   if (connectingPromise) return connectingPromise;
-  connectingPromise = mongoose.connect(mongoUri, { dbName }).catch((err) => {
+  connectingPromise = mongoose.connect(mongoUri, { dbName, serverSelectionTimeoutMS: 5000, maxPoolSize: 5 }).catch((err) => {
     connectingPromise = null;
     console.error("Mongo connect error", err?.message);
   });
   return connectingPromise;
 };
 
-app.use(async (req, res, next) => {
-  await ensureDb();
+app.use((req, res, next) => {
+  ensureDb();
   next();
 });
 
