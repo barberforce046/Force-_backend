@@ -11,7 +11,8 @@ app.use(cors());
 app.use(express.json());
 
 app.get("/api/health", (req, res) => {
-  res.json({ ok: true, dbConnected: mongoose.connection.readyState === 1, hasUri: !!mongoUri, dbName, lastError: lastDbError });
+  const uriScheme = mongoUri ? String(mongoUri).split(":")[0] : null;
+  res.json({ ok: true, dbConnected: mongoose.connection.readyState === 1, hasUri: !!mongoUri, uriScheme, dbName, lastError: lastDbError });
 });
 
 app.get("/", (req, res) => {
