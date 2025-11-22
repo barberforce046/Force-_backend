@@ -13,6 +13,10 @@ app.get("/api/health", (req, res) => {
   res.json({ ok: true });
 });
 
+app.get("/", (req, res) => {
+  res.json({ ok: true, service: "force-backend", endpoints: ["/api/health", "/api/auth", "/api/cuts"] });
+});
+
 app.use("/api/auth", authRouter);
 app.use("/api/cuts", cutsRouter);
 
