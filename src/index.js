@@ -6,11 +6,12 @@ import authRouter from "./routes/auth.js";
 import cutsRouter from "./routes/cuts.js";
 
 const app = express();
+let lastDbError = null;
 app.use(cors());
 app.use(express.json());
 
 app.get("/api/health", (req, res) => {
-  res.json({ ok: true });
+  res.json({ ok: true, dbConnected: mongoose.connection.readyState === 1, hasUri: !!mongoUri, dbName, lastError: lastDbError });
 });
 
 app.get("/", (req, res) => {
@@ -36,6 +37,7 @@ const ensureDb = async () => {
   if (connectingPromise) return connectingPromise;
   connectingPromise = mongoose.connect(mongoUri, { dbName, serverSelectionTimeoutMS: 5000, maxPoolSize: 5 }).catch((err) => {
     connectingPromise = null;
+    lastDbError = err?.message;
     console.error("Mongo connect error", err?.message);
   });
   return connectingPromise;
