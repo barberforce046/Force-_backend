@@ -20,16 +20,27 @@ app.get("/", (req, res) => {
 app.use("/api/auth", authRouter);
 app.use("/api/cuts", cutsRouter);
 
-const start = async () => {
-  if (!mongoUri) {
-    throw new Error("Missing MONGODB_URI env var");
-  }
-  await mongoose.connect(mongoUri, { dbName });
-  if (!process.env.VERCEL) {
-    app.listen(port, () => {});
-  }
+let connectingPromise = null;
+const ensureDb = async () => {
+  if (!mongoUri) return; // allow health/root without hard failing
+  if (mongoose.connection.readyState === 1) return; // connected
+  if (connectingPromise) return connectingPromise;
+  connectingPromise = mongoose.connect(mongoUri, { dbName }).catch((err) => {
+    connectingPromise = null;
+    console.error("Mongo connect error", err?.message);
+  });
+  return connectingPromise;
 };
 
-start();
+app.use(async (req, res, next) => {
+  await ensureDb();
+  next();
+});
+
+if (!process.env.VERCEL) {
+  ensureDb().then(() => {
+    app.listen(port, () => {});
+  });
+}
 
 export default app;
