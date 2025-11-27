@@ -15,6 +15,14 @@ app.get("/api/health", (req, res) => {
   res.json({ ok: true, dbConnected: mongoose.connection.readyState === 1, hasUri: !!mongoUri, uriScheme, dbName, lastError: lastDbError });
 });
 
+app.get("/favicon.ico", (req, res) => {
+  res.status(204).end();
+});
+
+app.get("/favicon.png", (req, res) => {
+  res.status(204).end();
+});
+
 app.get("/", (req, res) => {
   res.json({ ok: true, service: "force-backend", endpoints: ["/api/health", "/api/auth", "/api/cuts"] });
 });
