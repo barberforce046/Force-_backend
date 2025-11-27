@@ -24,7 +24,13 @@ app.get("/favicon.png", (req, res) => {
 });
 
 app.get("/", (req, res) => {
-  res.json({ ok: true, service: "force-backend", endpoints: ["/api/health", "/api/auth", "/api/cuts"] });
+  res.json({
+    ok: true,
+    service: "force-backend",
+    endpoints: ["/api/health", "/api/auth", "/api/cuts"],
+    dbConnected: mongoose.connection.readyState === 1,
+    dbName
+  });
 });
 
 // Ensure DB for API routes; fail fast if not connected
